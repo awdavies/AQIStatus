@@ -15,7 +15,7 @@ private val AQI_TABLE = listOf(
 ).toTypedArray()
 
 private fun aqiTupleFloor(pm: Double): AqiTuple {
-    lateinit var res: AqiTuple
+    var res = AqiTuple(0, 0.0)
     for (tuple in AQI_TABLE) {
         if (tuple.pm25 > pm) {
             return res

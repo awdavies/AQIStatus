@@ -10,7 +10,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 private const val API_VERSION = "7.0.18"
-private const val TAG = "AqiParser"
+private const val TAG = "SensorQueue"
 
 private fun distanceFromPoint(
     latitude: Double,
@@ -37,10 +37,7 @@ private fun distanceFromPoint(
 }
 
 class Sensor private constructor(
-    val pmZero: Double,
     val aqi: Int,
-    private val latitude: Double,
-    private val longitude: Double,
     private val distanceFromOrigin: Double
 ) : Comparable<Sensor> {
 
@@ -51,9 +48,8 @@ class Sensor private constructor(
                 val thisLatitude = json.getDouble(6)
                 val thisLongitude = json.getDouble(7)
                 val pmCorrect = lrapaCorrect(pmZero)
-                Sensor(pmCorrect, aqiFromPm25(pmCorrect),latitude, longitude, distanceFromPoint(thisLatitude, thisLongitude, latitude, longitude))
+                Sensor(aqiFromPm25(pmCorrect), distanceFromPoint(thisLatitude, thisLongitude, latitude, longitude))
             } catch (e: JSONException) {
-                Log.e(TAG, "JSON Exception encountered: ${e.stackTrace}")
                 null
             }
         }
@@ -72,8 +68,6 @@ class SensorQueue private constructor(private val sensors: PriorityQueue<Sensor>
         }
         return res
     }
-
-    val size: Int get() = this.sensors.size
 
     companion object {
         fun create(latitude: Double, longitude: Double, body: JSONObject): SensorQueue? {
@@ -110,7 +104,7 @@ class SensorQueue private constructor(private val sensors: PriorityQueue<Sensor>
                 }
                 SensorQueue(sensorArray)
             } catch (e: JSONException) {
-                Log.e(TAG, "Error parsing JSON: ${e.stackTrace}")
+                Log.d(TAG, "Error parsing JSON")
                 null
             }
         }

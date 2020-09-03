@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">AQI Status Checker</string>
+
+    <!-- Preference Titles -->
+    <string name="notifications">Notifications</string>
+
+    <!-- Notification Preferences -->
+    <string name="notify_title">Notify on AQI Changes (TBD)</string>
+
+    <string name="notification_channel_id">aqi_notification_channel</string>
+    <string name="notification_title">Current Air Quality Index</string>
+    <string name="channel_description">Air Quality Index Updates</string>
+</resources>

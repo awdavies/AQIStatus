@@ -7,7 +7,8 @@ of take a stab at guessing what the air quality is right now?
 Ever wanted to see at a glance whether the wildfires in your area are preventing
 you from being able to go outside for a run?
 
-Ever wanted to know if it's safe to open the windows without opening your door?
+Ever wanted to know if it's safe to open the windows without taking a whiff of
+smokey air into your fragile pink lungs?
 
 Then this cheesy app is for you!
 

@@ -62,7 +62,8 @@ minute (ish). Then just leave the app in the background and you're good to go.
   address. This means it might be possible that one of you always has the latest
   AQI data and the other doesn't. The fix for this would be prohibitively time
   consuming for me to implement, so for now I just suggest one person turn off
-  their WiFi and use mobile networking if they are in dire need of constant.
+  their WiFi and use mobile networking if they are in dire need of constant AQI
+  updates.
 
 ## Future Plans
 

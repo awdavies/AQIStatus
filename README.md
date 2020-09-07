@@ -28,6 +28,8 @@ That's it! That's all it does.
 
 ## How do I install it?
 
+# Gradle
+
 I'm too lazy right now to figure out how to install this thing on the play
 store, so for now you'll have to install this thing yourself.
 
@@ -51,13 +53,22 @@ Starting the app will open a notification that will get the AQI in your
 immediate area once per minute (ish). Then just leave the app in the background
 and you're good to go.
 
+# Release APK
+
+This will create a lot of noise from your phone, but it is now possible to
+install a release binary from under `app/release` in this very codebase!
+
+You can download it on your phone and then go through a bunch of security hoops
+(at your own risk, of course).
+
 ## Caveats
 
 * There is no warranty for this software. Use at your own risk.
 * This is mostly a toy project, so this may never make it to the play store, and
   I may never add any of the fun features I've outlined.
-* None of the options do anything yet.
-* The back button in the app does _nothing_. Just put the app in the background.
+* In the release binary tapping on the notification appears to remove the
+  foreground service and force the user to close and reopen the app. Not sure
+  why this is the case.
 * If you and a friend are both running the app under the same WiFi, there is no
   mechanism in place to ensure both of you handle PurpleAir's rate limiter
   correctly, as both of you will be seen by PurpleAir's servers as the same IP
@@ -66,6 +77,7 @@ and you're good to go.
   consuming for me to implement, so for now I just suggest one person turn off
   their WiFi and use mobile networking if they are in dire need of constant AQI
   updates.
+* See issues section.
 
 ## Troubleshooting
 

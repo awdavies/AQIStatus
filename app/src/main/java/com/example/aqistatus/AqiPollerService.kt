@@ -153,7 +153,7 @@ class AqiPollerService : Service() {
                 addNextIntentWithParentStack(nextIntent)
                 getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
             }
-            builder.setContentIntent(pendingIntent)
+            builder.addAction(R.drawable.common_google_signin_btn_text_dark_normal, "Check in PurpleAir", pendingIntent)
         }
         return builder.build()
     }

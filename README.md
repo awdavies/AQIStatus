@@ -56,7 +56,8 @@ and you're good to go.
 # Release APK
 
 This will create a lot of noise from your phone, but it is now possible to
-install a release binary from under `app/release` in this very codebase!
+install a release binary from under `app/release` in this very codebase! You can
+also navigate through the releases list.
 
 You can download it on your phone and then go through a bunch of security hoops
 (at your own risk, of course).

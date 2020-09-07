@@ -13,4 +13,5 @@
     <string name="polling_rate">Update Frequency</string>
     <string name="general">General Preferences</string>
     <string name="polling_key">polling</string>
+    <string name="purple_air_open_btn">Check in PurpleAir</string>
 </resources>

@@ -26,6 +26,8 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceFragmentCompat
@@ -40,7 +42,8 @@ private const val PERMISSION_ID = 123
  * I'll fix it later!
  */
 private fun startAqiPoller(ctx: Context?) {
-    val pollFrequencyMinutes = PreferenceManager.getDefaultSharedPreferences(ctx).getString(ctx?.getString(R.string.polling_key), "1")
+    val pollFrequencyMinutes =
+        PreferenceManager.getDefaultSharedPreferences(ctx).getString(ctx?.getString(R.string.polling_key), "1")
     Log.d(TAG, "Starting AQI poller with frequency of $pollFrequencyMinutes minutes.")
     var i = Intent(ctx, AqiPollerService::class.java)
     i.putExtra(ctx?.getString(R.string.polling_key), Integer.parseInt(pollFrequencyMinutes))
@@ -52,6 +55,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_activity)
+        actionBar?.setDisplayHomeAsUpEnabled(true)
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.settings, SettingsFragment())
@@ -62,6 +66,9 @@ class SettingsActivity : AppCompatActivity() {
             Manifest.permission.ACCESS_BACKGROUND_LOCATION
         ).toTypedArray()
         when {
+            intent.flags.and(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0 -> {
+                Log.d(TAG, "Someone clicked on the notification")
+            }
             permissions.fold(true) { acc, permission ->
                 acc && ContextCompat.checkSelfPermission(
                     applicationContext,
@@ -80,6 +87,21 @@ class SettingsActivity : AppCompatActivity() {
                 requestPermissions(permissions, PERMISSION_ID)
             }
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        moveTaskToBack(true)
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_BACK -> {
+                moveTaskToBack(true)
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onRequestPermissionsResult(

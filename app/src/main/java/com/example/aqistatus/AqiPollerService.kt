@@ -140,11 +140,18 @@ class AqiPollerService : Service() {
             aqi.toString()
         }
         val title = "${applicationContext.getString(R.string.notification_title)}: $aqiString"
+        val mainAppIntent = TaskStackBuilder.create(applicationContext).run {
+            val intent = Intent(applicationContext, SettingsActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
+            addNextIntentWithParentStack(intent)
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
         var builder = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(aqiDescription)
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(mainAppIntent)
             .setOngoing(true)
         if (aqi > 0) {
             val nextIntent = Intent(Intent.ACTION_VIEW)
@@ -153,7 +160,11 @@ class AqiPollerService : Service() {
                 addNextIntentWithParentStack(nextIntent)
                 getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
             }
-            builder.addAction(R.drawable.common_google_signin_btn_text_dark_normal, "Check in PurpleAir", pendingIntent)
+            builder.addAction(
+                R.drawable.common_google_signin_btn_text_dark_normal,
+                getString(R.string.purple_air_open_btn),
+                pendingIntent
+            )
         }
         return builder.build()
     }

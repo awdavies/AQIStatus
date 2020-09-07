@@ -60,6 +60,8 @@ class AqiPollerService : Service() {
     private lateinit var lastLocation: Location
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        Log.d(TAG, "Starting AQI Poller")
         super.onStartCommand(intent, flags, startId)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
@@ -100,9 +102,10 @@ class AqiPollerService : Service() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        Log.d(TAG, "Shutting down AQI Poller")
         fusedLocationClient.removeLocationUpdates(locationCallback)
         httpQueue.cancelAll(TAG)
+        super.onDestroy()
     }
 
     private fun startLocationLoop() {
@@ -140,18 +143,11 @@ class AqiPollerService : Service() {
             aqi.toString()
         }
         val title = "${applicationContext.getString(R.string.notification_title)}: $aqiString"
-        val mainAppIntent = TaskStackBuilder.create(applicationContext).run {
-            val intent = Intent(applicationContext, SettingsActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
-            addNextIntentWithParentStack(intent)
-            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
-        }
         var builder = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(aqiDescription)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(mainAppIntent)
             .setOngoing(true)
         if (aqi > 0) {
             val nextIntent = Intent(Intent.ACTION_VIEW)

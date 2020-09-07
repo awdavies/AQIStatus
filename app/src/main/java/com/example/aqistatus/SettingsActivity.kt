@@ -61,9 +61,6 @@ class SettingsActivity : AppCompatActivity() {
             Manifest.permission.ACCESS_BACKGROUND_LOCATION
         ).toTypedArray()
         when {
-            intent.flags.and(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0 -> {
-                Log.d(TAG, "Someone clicked on the notification")
-            }
             permissions.fold(true) { acc, permission ->
                 acc && ContextCompat.checkSelfPermission(
                     applicationContext,
@@ -123,8 +120,8 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         Log.d(TAG, "Shutting down")
-        super.onDestroy()
         stopService(Intent(this, AqiPollerService::class.java))
+        super.onDestroy()
     }
 
     class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {

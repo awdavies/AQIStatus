@@ -20,13 +20,12 @@
 package com.example.aqistatus
 
 import android.Manifest
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
@@ -58,6 +57,7 @@ class AqiPollerService : Service() {
                 NotificationManager
     }
     private var pollFrequencyMinutes: Int = 1
+    private lateinit var lastLocation: Location
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -70,15 +70,15 @@ class AqiPollerService : Service() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 Log.d(TAG, "Firing location result callback.")
                 locationResult ?: return
-                val location = locationResult.lastLocation
-                Log.d(TAG, "Got location: LAT: ${location.latitude} LON: ${location.longitude}.")
+                lastLocation = locationResult.lastLocation
+                Log.d(TAG, "Got location: LAT: ${lastLocation.latitude} LON: ${lastLocation.longitude}.")
                 val req = JsonObjectRequest(
                     Request.Method.GET,
-                    PurpleAirUrl(location).squareMileQueryString(4),
+                    PurpleAirUrl(lastLocation).squareMileQueryString(4),
                     null,
                     Response.Listener<JSONObject> { response ->
                         Log.d(TAG, "Received HTTP response from PurpleAir")
-                        val sensorQueue = SensorQueue.create(location.latitude, location.longitude, response)
+                        val sensorQueue = SensorQueue.create(lastLocation.latitude, lastLocation.longitude, response)
                         sensorQueue ?: return@Listener
                         val nearestSensors = sensorQueue.nearestSensors(30)
                         val average = nearestSensors.sumBy { s -> s.aqi } / nearestSensors.size
@@ -140,13 +140,22 @@ class AqiPollerService : Service() {
             aqi.toString()
         }
         val title = "${applicationContext.getString(R.string.notification_title)}: $aqiString"
-        return NotificationCompat.Builder(applicationContext, channelId)
+        var builder = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(aqiDescription)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
-            .build()
+        if (aqi > 0) {
+            val nextIntent = Intent(Intent.ACTION_VIEW)
+            nextIntent.data = Uri.parse(PurpleAirUrl(lastLocation).intentUrl())
+            val pendingIntent = TaskStackBuilder.create(applicationContext).run {
+                addNextIntentWithParentStack(nextIntent)
+                getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+            }
+            builder.setContentIntent(pendingIntent)
+        }
+        return builder.build()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

@@ -36,11 +36,6 @@ import androidx.preference.PreferenceManager
 private const val TAG = "AqiStatus"
 private const val PERMISSION_ID = 123
 
-/**
- * This is probably not the best way to handle starting the AQI poller, but it appears to work and the
- * probably-unnecessary global variable should be accessed from within this thread all by itself, so
- * I'll fix it later!
- */
 private fun startAqiPoller(ctx: Context?) {
     val pollFrequencyMinutes =
         PreferenceManager.getDefaultSharedPreferences(ctx).getString(ctx?.getString(R.string.polling_key), "1")

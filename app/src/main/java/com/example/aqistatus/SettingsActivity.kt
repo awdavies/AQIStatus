@@ -29,10 +29,10 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 
 private const val TAG = "AqiStatus"
 private const val PERMISSION_ID = 123
-private var pollFrequencyMinutes: Int = 1
 
 /**
  * This is probably not the best way to handle starting the AQI poller, but it appears to work and the
@@ -40,9 +40,10 @@ private var pollFrequencyMinutes: Int = 1
  * I'll fix it later!
  */
 private fun startAqiPoller(ctx: Context?) {
+    val pollFrequencyMinutes = PreferenceManager.getDefaultSharedPreferences(ctx).getString(ctx?.getString(R.string.polling_key), "1")
     Log.d(TAG, "Starting AQI poller with frequency of $pollFrequencyMinutes minutes.")
     var i = Intent(ctx, AqiPollerService::class.java)
-    i.putExtra(ctx?.getString(R.string.polling_key), pollFrequencyMinutes)
+    i.putExtra(ctx?.getString(R.string.polling_key), Integer.parseInt(pollFrequencyMinutes))
     ctx?.startService(i)
 }
 
@@ -116,9 +117,9 @@ class SettingsActivity : AppCompatActivity() {
             preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
         }
 
-        override fun onPause() {
-            super.onPause()
+        override fun onDestroy() {
             preferenceManager.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
+            super.onDestroy()
         }
 
         override fun onSharedPreferenceChanged(preferences: SharedPreferences?, key: String?) {
@@ -127,7 +128,7 @@ class SettingsActivity : AppCompatActivity() {
                     // If changing the polling frequency, restart the poller (if this happens too frequently,
                     // there might need to be some code that checks when the rate limiter says to query again).
                     Log.d(TAG, "Settings changed. Attempting to restart AQI Poller service")
-                    pollFrequencyMinutes = Integer.parseInt(preferences?.getString(key, "1") ?: "1")
+                    val pollFrequencyMinutes = Integer.parseInt(preferences?.getString(key, "1") ?: "1")
                     Log.d(TAG, "Poll frequency updated to $pollFrequencyMinutes minutes")
                     val ctx = activity?.applicationContext
                     ctx?.stopService(Intent(ctx, AqiPollerService::class.java))

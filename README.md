@@ -45,9 +45,11 @@ gradle installDebug
 Then you should have `AQI Status Checker` installed on your phone.
 
 Once you run it, enable all location permissions. You'll then be presented with
-some options that do _absolutely nothing_ right now. Starting the app will then
-open a notification that will get the AQI in your immediate area once per
-minute (ish). Then just leave the app in the background and you're good to go.
+some simple options for updating the update frequency.
+
+Starting the app will open a notification that will get the AQI in your
+immediate area once per minute (ish). Then just leave the app in the background
+and you're good to go.
 
 ## Caveats
 
@@ -64,6 +66,21 @@ minute (ish). Then just leave the app in the background and you're good to go.
   consuming for me to implement, so for now I just suggest one person turn off
   their WiFi and use mobile networking if they are in dire need of constant AQI
   updates.
+
+## Troubleshooting
+
+* AQI is just sitting on pending:
+  * This might be something to do with your update frequency being quite long,
+    which is resulting in the location updater sitting around for a long time.
+    If it's been like this for a few minutes, try updating the update interval
+    to be longer/shorter than the one you have right now, which will restart
+    the persistent notification foreground service. If this still doesn't work,
+    there might be some other machine on your WiFi contact PurpleAir frequently
+    (see caveats for more information on why this might happen), so it might be
+    necessary to switch your phone to mobile networking instead of using WiFi.
+    To force the foreground service to restart and immediately try to speak to
+    PurpleAir, just change the update interval in your settings to a different
+    number.
 
 ## Future Plans
 

@@ -20,7 +20,9 @@
 package com.example.aqistatus
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -30,6 +32,19 @@ import androidx.preference.PreferenceFragmentCompat
 
 private const val TAG = "AqiStatus"
 private const val PERMISSION_ID = 123
+private var pollFrequencyMinutes: Int = 1
+
+/**
+ * This is probably not the best way to handle starting the AQI poller, but it appears to work and the
+ * probably-unnecessary global variable should be accessed from within this thread all by itself, so
+ * I'll fix it later!
+ */
+private fun startAqiPoller(ctx: Context?) {
+    Log.d(TAG, "Starting AQI poller with frequency of $pollFrequencyMinutes minutes.")
+    var i = Intent(ctx, AqiPollerService::class.java)
+    i.putExtra(ctx?.getString(R.string.polling_key), pollFrequencyMinutes)
+    ctx?.startService(i)
+}
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -53,7 +68,7 @@ class SettingsActivity : AppCompatActivity() {
                 ) == PackageManager.PERMISSION_GRANTED
             } -> {
                 Log.d(TAG, "All location permissions granted")
-                startAqiPoller()
+                startAqiPoller(this)
             }
             permissions.fold(true) { acc, permission -> acc && this.shouldShowRequestPermissionRationale(permission) } -> {
                 // TODO(awdavies): Punt some info to the user.
@@ -78,8 +93,8 @@ class SettingsActivity : AppCompatActivity() {
                     // TODO(awdavies): Punt some info to the user.
                     Log.w(TAG, "Some permissions missing. Cannot operate normally.")
                 } else {
-                    Log.d(TAG, "Attempting to start service")
-                    startAqiPoller()
+                    Log.d(TAG, "Should attempt to start service")
+                    startAqiPoller(this)
                 }
             }
             else -> {
@@ -88,19 +103,40 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun startAqiPoller() {
-        startService(Intent(this, AqiPollerService::class.java))
-    }
-
     override fun onDestroy() {
         Log.d(TAG, "Shutting down")
         super.onDestroy()
         stopService(Intent(this, AqiPollerService::class.java))
     }
 
-    class SettingsFragment : PreferenceFragmentCompat() {
+    class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
+            preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+        }
+
+        override fun onPause() {
+            super.onPause()
+            preferenceManager.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
+        }
+
+        override fun onSharedPreferenceChanged(preferences: SharedPreferences?, key: String?) {
+            when (key) {
+                getString(R.string.polling_key) -> {
+                    // If changing the polling frequency, restart the poller (if this happens too frequently,
+                    // there might need to be some code that checks when the rate limiter says to query again).
+                    Log.d(TAG, "Settings changed. Attempting to restart AQI Poller service")
+                    pollFrequencyMinutes = Integer.parseInt(preferences?.getString(key, "1") ?: "1")
+                    Log.d(TAG, "Poll frequency updated to $pollFrequencyMinutes minutes")
+                    val ctx = activity?.applicationContext
+                    ctx?.stopService(Intent(ctx, AqiPollerService::class.java))
+                    startAqiPoller(ctx)
+                }
+                else -> {
+                    // Do nothin.
+                }
+            }
         }
     }
 }

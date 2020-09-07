@@ -1,9 +1,22 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- TODO(awdavies): Get some kind of barrier setup for notifications.
     <PreferenceCategory app:title="@string/notifications">
         <SwitchPreferenceCompat
             app:key="notify"
             app:title="@string/notify_title" />
+
+    </PreferenceCategory>
+    -->
+    <PreferenceCategory app:title="@string/general">
+        <ListPreference
+            android:summary="%s"
+            android:defaultValue="1"
+            android:entries="@array/polling_frequency_entries"
+            android:entryValues="@array/polling_frequency_values"
+            app:key="@string/polling_key"
+            app:title="@string/polling_rate" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -42,10 +42,10 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
 import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 private const val TAG = "AqiPoller"
-private const val LOCATION_POLL_INTERVAL = 65000L
-private const val LOCATION_POLL_FASTEST = 55000L
+private const val WIGGLE_ROOM_MS = 10000L
 
 class AqiPollerService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -57,12 +57,14 @@ class AqiPollerService : Service() {
         applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as
                 NotificationManager
     }
+    private var pollFrequencyMinutes: Int = 1
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
         }
+        pollFrequencyMinutes = intent?.getIntExtra(getString(R.string.polling_key), 1) ?: 1
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
@@ -80,7 +82,6 @@ class AqiPollerService : Service() {
                         sensorQueue ?: return@Listener
                         val nearestSensors = sensorQueue.nearestSensors(30)
                         val average = nearestSensors.sumBy { s -> s.aqi } / nearestSensors.size
-                        Log.i(TAG, "Need to set foreground here: $average")
                         notificationManager.notify(
                             R.string.notification_channel_id,
                             foregroundInfo(average)
@@ -116,10 +117,11 @@ class AqiPollerService : Service() {
             Log.w(TAG, "Don't have location permissions. Giving up.")
             return
         }
+        val interval = TimeUnit.MINUTES.toMillis(pollFrequencyMinutes.toLong())
         fusedLocationClient.requestLocationUpdates(
             LocationRequest.create().setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(LOCATION_POLL_INTERVAL)
-                .setFastestInterval(LOCATION_POLL_FASTEST),
+                .setInterval(interval + WIGGLE_ROOM_MS)
+                .setFastestInterval(interval - WIGGLE_ROOM_MS),
             locationCallback,
             Looper.getMainLooper()
         )

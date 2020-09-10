@@ -19,7 +19,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.aqistatus">
+    package="com.awdavies.aqistatus">
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -41,7 +41,7 @@
             android:foregroundServiceType="location" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.awdavies.aqistatus.SettingsActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask">
             <intent-filter>

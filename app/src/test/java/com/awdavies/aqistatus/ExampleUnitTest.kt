@@ -1,4 +1,4 @@
-package com.example.aqistatus
+package com.awdavies.aqistatus
 
 import org.junit.Test
 

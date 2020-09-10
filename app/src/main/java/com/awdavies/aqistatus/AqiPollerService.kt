@@ -17,7 +17,7 @@
  *     along with AQI Status.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.example.aqistatus
+package com.awdavies.aqistatus
 
 import android.Manifest
 import android.app.*

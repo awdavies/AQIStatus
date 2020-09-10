@@ -27,6 +27,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
@@ -40,6 +41,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
+import kotlinx.coroutines.Runnable
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -49,24 +51,33 @@ private const val WIGGLE_ROOM_MS = 10000L
 class AqiPollerService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    private val httpQueue: RequestQueue by lazy {
-        Volley.newRequestQueue(applicationContext)
+    private val purpleAirPoller: VolleyWrapper by lazy {
+        VolleyWrapper(Volley.newRequestQueue(applicationContext), this)
     }
     private val notificationManager: NotificationManager by lazy {
         applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as
                 NotificationManager
     }
-    private var pollFrequencyMinutes: Int = 1
+    private val locationPollingMinutes: Long = 1
+    private var pollFrequencyMinutes: Long = 1
     private lateinit var lastLocation: Location
+    private var httpLoopStarted: Boolean = false
+
+    private fun startHttpLoop() {
+        if (httpLoopStarted) {
+            return
+        }
+        httpLoopStarted = true
+        purpleAirPoller.start()
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
         Log.d(TAG, "Starting AQI Poller")
         super.onStartCommand(intent, flags, startId)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
         }
-        pollFrequencyMinutes = intent?.getIntExtra(getString(R.string.polling_key), 1) ?: 1
+        pollFrequencyMinutes = intent?.getIntExtra(getString(R.string.polling_key), 1)?.toLong() ?: 1
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
@@ -74,26 +85,7 @@ class AqiPollerService : Service() {
                 locationResult ?: return
                 lastLocation = locationResult.lastLocation
                 Log.d(TAG, "Got location: LAT: ${lastLocation.latitude} LON: ${lastLocation.longitude}.")
-                val req = JsonObjectRequest(
-                    Request.Method.GET,
-                    PurpleAirUrl(lastLocation).squareMileQueryString(4),
-                    null,
-                    Response.Listener<JSONObject> { response ->
-                        Log.d(TAG, "Received HTTP response from PurpleAir")
-                        val sensorQueue = SensorQueue.create(lastLocation.latitude, lastLocation.longitude, response)
-                        sensorQueue ?: return@Listener
-                        val nearestSensors = sensorQueue.nearestSensors(30)
-                        val average = nearestSensors.sumBy { s -> s.aqi } / nearestSensors.size
-                        notificationManager.notify(
-                            R.string.notification_channel_id,
-                            foregroundInfo(average)
-                        )
-                    },
-                    Response.ErrorListener { error ->
-                        Log.d(TAG, "Error from HTTP request", error)
-                    })
-                req.tag = TAG
-                httpQueue.add(req)
+                startHttpLoop()
             }
         }
         startForeground(R.string.notification_channel_id, foregroundInfo(-1))
@@ -104,7 +96,7 @@ class AqiPollerService : Service() {
     override fun onDestroy() {
         Log.d(TAG, "Shutting down AQI Poller")
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        httpQueue.cancelAll(TAG)
+        purpleAirPoller.stop()
         super.onDestroy()
     }
 
@@ -120,9 +112,9 @@ class AqiPollerService : Service() {
             Log.w(TAG, "Don't have location permissions. Giving up.")
             return
         }
-        val interval = TimeUnit.MINUTES.toMillis(pollFrequencyMinutes.toLong())
+        val interval = TimeUnit.MINUTES.toMillis(locationPollingMinutes)
         fusedLocationClient.requestLocationUpdates(
-            LocationRequest.create().setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+            LocationRequest.create().setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
                 .setInterval(interval + WIGGLE_ROOM_MS)
                 .setFastestInterval(interval - WIGGLE_ROOM_MS),
             locationCallback,
@@ -143,7 +135,7 @@ class AqiPollerService : Service() {
             aqi.toString()
         }
         val title = "${applicationContext.getString(R.string.notification_title)}: $aqiString"
-        var builder = NotificationCompat.Builder(applicationContext, channelId)
+        val builder = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(aqiDescription)
@@ -178,5 +170,76 @@ class AqiPollerService : Service() {
     @Nullable
     override fun onBind(intent: Intent): IBinder? {
         return null
+    }
+
+    class VolleyWrapper(private val queue: RequestQueue, private val poller: AqiPollerService) {
+        private var numberOfErrorAttempts: Long = 0
+        private var lastRequestFailed: Boolean = false
+        private var errorRetryMs: Long = 30000
+        private val errorRetryMax: Long = 3
+        private val errorRetryFactor: Float = 1.5f
+        private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
+
+        private fun backoffReset() {
+            numberOfErrorAttempts = 0
+            lastRequestFailed = false
+            errorRetryMs = 30000
+        }
+
+        fun start() {
+            queue.addRequestFinishedListener(RequestQueue.RequestFinishedListener<JsonObjectRequest> {
+                if (lastRequestFailed && numberOfErrorAttempts < errorRetryMax) {
+                    Log.d(TAG, "Last request failed, doing backoff reattempt.")
+                    handler.postDelayed(Runnable {
+                        queue.add(makeRequest())
+                    }, errorRetryMs)
+                    errorRetryMs = (errorRetryMs * errorRetryFactor).toLong()
+                    numberOfErrorAttempts++
+                    if (numberOfErrorAttempts >= errorRetryMax) {
+                        Log.d(
+                            TAG,
+                            "Reached max number of retries. Resuming normal behavior after this next attempt fires."
+                        )
+                    }
+                } else {
+                    Log.d(TAG, "Posting delayed poller (normal behavior).")
+                    handler.postDelayed(Runnable {
+                        queue.add(makeRequest())
+                    }, TimeUnit.MINUTES.toMillis(poller.pollFrequencyMinutes))
+                }
+            })
+            queue.add(makeRequest())
+        }
+
+        fun stop() {
+            queue.cancelAll(TAG)
+            handler.removeCallbacksAndMessages(null)
+        }
+
+        private fun makeRequest(): JsonObjectRequest {
+            val req = JsonObjectRequest(
+                Request.Method.GET,
+                PurpleAirUrl(poller.lastLocation).squareMileQueryString(4),
+                null,
+                Response.Listener<JSONObject> { response ->
+                    Log.d(TAG, "Received HTTP response from PurpleAir.")
+                    backoffReset()
+                    val sensorQueue =
+                        SensorQueue.create(poller.lastLocation.latitude, poller.lastLocation.longitude, response)
+                    sensorQueue ?: return@Listener
+                    val nearestSensors = sensorQueue.nearestSensors(30)
+                    val average = nearestSensors.sumBy { s -> s.aqi } / nearestSensors.size
+                    poller.notificationManager.notify(
+                        R.string.notification_channel_id,
+                        poller.foregroundInfo(average)
+                    )
+                },
+                Response.ErrorListener { error ->
+                    lastRequestFailed = true
+                    Log.d(TAG, "Error from HTTP request.", error)
+                })
+            req.tag = TAG
+            return req
+        }
     }
 }

@@ -139,7 +139,7 @@ class AqiPollerService : Service() {
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(aqiDescription)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_cloud_queue)
             .setOngoing(true)
         if (aqi > 0) {
             val nextIntent = Intent(Intent.ACTION_VIEW)

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AQI Status Checker</string>
+    <string name="app_name">AQI Buddy</string>
 
     <!-- Preference Titles -->
     <string name="notifications">Notifications</string>

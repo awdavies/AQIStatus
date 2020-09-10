@@ -38,7 +38,7 @@ private const val PERMISSION_ID = 123
 
 private fun startAqiPoller(ctx: Context?) {
     val pollFrequencyMinutes =
-        PreferenceManager.getDefaultSharedPreferences(ctx).getString(ctx?.getString(R.string.polling_key), "1")
+        PreferenceManager.getDefaultSharedPreferences(ctx).getString(ctx?.getString(R.string.polling_key), "1") ?: "1"
     Log.d(TAG, "Starting AQI poller with frequency of $pollFrequencyMinutes minutes.")
     var i = Intent(ctx, AqiPollerService::class.java)
     i.putExtra(ctx?.getString(R.string.polling_key), Integer.parseInt(pollFrequencyMinutes))

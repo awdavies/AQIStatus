@@ -97,8 +97,8 @@ You can download it on your phone and then go through a bunch of security hoops
 
 ## Future Plans
 
-* Actual options:
-  * Polling frequency.
+* More options:
   * Radius of sensors from which to check.
+  * Graphs and such.
 * Alarms so you know when to open the windows or go joggin.
 * Color coding for scary reds and spooky purples.

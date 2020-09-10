@@ -28,7 +28,7 @@ That's it! That's all it does.
 
 ## How do I install it?
 
-# Gradle
+### Gradle
 
 I'm too lazy right now to figure out how to install this thing on the play
 store, so for now you'll have to install this thing yourself.
@@ -53,7 +53,7 @@ Starting the app will open a notification that will get the AQI in your
 immediate area once per minute (ish). Then just leave the app in the background
 and you're good to go.
 
-# Release APK
+### Release APK
 
 This will create a lot of noise from your phone, but it is now possible to
 install a release binary from under `app/release` in this very codebase! You can

@@ -122,6 +122,13 @@ class AqiPollerService : Service() {
         )
     }
 
+    private fun versionExceptionForegroundInfo(e: VersionException): Notification {
+        val channelId = applicationContext.getString(R.string.notification_channel_id)
+        val description = "PurpleAir version: '${e.got}'. Our version: '${e.want}'"
+        val title = applicationContext.getString(R.string.version_error_title)
+        return foregroundInfoHelper(title, description, channelId)
+    }
+
     private fun foregroundInfo(aqi: Int): Notification {
         val channelId = applicationContext.getString(R.string.notification_channel_id)
         val aqiDescription = if (aqi < 0) {
@@ -135,13 +142,17 @@ class AqiPollerService : Service() {
             aqi.toString()
         }
         val title = "${applicationContext.getString(R.string.notification_title)}: $aqiString"
+        return foregroundInfoHelper(title, aqiDescription, channelId)
+    }
+
+    private fun foregroundInfoHelper(title: String, description: String, channelId: String): Notification {
         val builder = NotificationCompat.Builder(applicationContext, channelId)
             .setContentTitle(title)
             .setTicker(title)
-            .setContentText(aqiDescription)
+            .setContentText(description)
             .setSmallIcon(R.drawable.ic_stat_cloud_queue)
             .setOngoing(true)
-        if (aqi > 0) {
+        if (this::lastLocation.isInitialized) {
             val nextIntent = Intent(Intent.ACTION_VIEW)
             nextIntent.data = Uri.parse(PurpleAirUrl(lastLocation).intentUrl())
             val pendingIntent = TaskStackBuilder.create(applicationContext).run {
@@ -224,15 +235,22 @@ class AqiPollerService : Service() {
                 Response.Listener<JSONObject> { response ->
                     Log.d(TAG, "Received HTTP response from PurpleAir.")
                     backoffReset()
-                    val sensorQueue =
-                        SensorQueue.create(poller.lastLocation.latitude, poller.lastLocation.longitude, response)
-                    sensorQueue ?: return@Listener
-                    val nearestSensors = sensorQueue.nearestSensors(30)
-                    val average = nearestSensors.sumBy { s -> s.aqi } / nearestSensors.size
-                    poller.notificationManager.notify(
-                        R.string.notification_channel_id,
-                        poller.foregroundInfo(average)
-                    )
+                    try {
+                        val sensorQueue =
+                            SensorQueue.create(poller.lastLocation.latitude, poller.lastLocation.longitude, response)
+                        sensorQueue ?: return@Listener
+                        val nearestSensors = sensorQueue.nearestSensors(100)
+                        val average = nearestSensors.sumBy { s -> s.aqi } / nearestSensors.size
+                        poller.notificationManager.notify(
+                            R.string.notification_channel_id,
+                            poller.foregroundInfo(average)
+                        )
+                    } catch (e: VersionException) {
+                        poller.notificationManager.notify(
+                            R.string.notification_channel_id,
+                            poller.versionExceptionForegroundInfo(e)
+                        )
+                    }
                 },
                 Response.ErrorListener { error ->
                     lastRequestFailed = true

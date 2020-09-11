@@ -28,8 +28,10 @@ import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
 
-private const val API_VERSION = "7.0.18"
+private const val API_VERSION = "7.0.19"
 private const val TAG = "SensorQueue"
+
+class VersionException(val want: String, val got: String) : Exception()
 
 private fun distanceFromPoint(
     latitude: Double,
@@ -98,7 +100,7 @@ class SensorQueue private constructor(private val sensors: PriorityQueue<Sensor>
                 }
                 if (version != API_VERSION) {
                     Log.e(TAG, "API Version out of date. Received '$version', expected '$API_VERSION'")
-                    return null
+                    throw VersionException(version, API_VERSION)
                 }
                 val data = body.getJSONArray("data") ?: run {
                     Log.e(TAG, "No data found in response: '$body'")

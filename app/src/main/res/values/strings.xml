@@ -9,6 +9,7 @@
 
     <string name="notification_channel_id">aqi_notification_channel</string>
     <string name="notification_title">Current Air Quality Index</string>
+    <string name="version_error_title">App Update Required</string>
     <string name="channel_description">Air Quality Index Updates</string>
     <string name="polling_rate">Update Frequency</string>
     <string name="general">General Preferences</string>

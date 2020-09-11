@@ -100,7 +100,7 @@ class SensorQueue private constructor(private val sensors: PriorityQueue<Sensor>
                 }
                 if (version != API_VERSION) {
                     Log.e(TAG, "API Version out of date. Received '$version', expected '$API_VERSION'")
-                    throw VersionException(version, API_VERSION)
+                    throw VersionException(API_VERSION, version)
                 }
                 val data = body.getJSONArray("data") ?: run {
                     Log.e(TAG, "No data found in response: '$body'")

@@ -59,8 +59,10 @@ This will create a lot of noise from your phone, but it is now possible to
 install a release binary from under `app/release` in this very codebase! You can
 also navigate through the releases list.
 
-You can download it on your phone and then go through a bunch of security hoops
-(at your own risk, of course).
+You can download it on your phone and then go through a bunch of security hoops,
+or [set up ADB](https://developer.android.com/studio/command-line/adb), and run
+`adb install app-release.apk` to avoid all the warning messages (at your own
+risk, of course).
 
 ## Caveats
 

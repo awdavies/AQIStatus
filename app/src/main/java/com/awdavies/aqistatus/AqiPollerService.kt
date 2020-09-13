@@ -152,6 +152,7 @@ class AqiPollerService : Service() {
             .setContentText(description)
             .setSmallIcon(R.drawable.ic_stat_cloud_queue)
             .setOngoing(true)
+            .setWhen(System.currentTimeMillis())
         if (this::lastLocation.isInitialized) {
             val nextIntent = Intent(Intent.ACTION_VIEW)
             nextIntent.data = Uri.parse(PurpleAirUrl(lastLocation).intentUrl())

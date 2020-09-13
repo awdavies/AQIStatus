@@ -1,5 +1,7 @@
-AQI Status Checker
+AQI Buddy
 ==================
+
+![Screenshot](https://awdavies-static.s3.amazonaws.com/Screenshot_20200912-195338.png "Screenshot of the app in use.")
 
 Ever been too lazy to open PurpleAir, then navigate to where you are, then sort
 of take a stab at guessing what the air quality is right now?

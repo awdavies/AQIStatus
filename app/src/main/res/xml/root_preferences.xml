@@ -12,7 +12,7 @@
     <PreferenceCategory app:title="@string/general">
         <ListPreference
             android:summary="%s"
-            android:defaultValue="1"
+            app:defaultValue="10"
             android:entries="@array/polling_frequency_entries"
             android:entryValues="@array/polling_frequency_values"
             app:key="@string/polling_key"

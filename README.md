@@ -20,9 +20,10 @@ square miles of you (this will be configurable eventually), then gives you an
 average of all sensors. The info will be available for viewing in a persistent
 notification.
 
-This applies the [LRAPA correction](http://lrapa.org/DocumentCenter/View/4147/PurpleAir-Correction-Summary)
+This applies the [EPA advised PM2.5 correction](https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=349513&Lab=CEMM&simplesearch=0&showcriteria=2&sortby=pubDate&timstype=&datebeginpublishedpresented=08/25/2018)
 to all PM2.5 readings before getting the AQI (as PurpleAir sensors tend to read
-on the higher side).
+on the higher side). This is, so far, the most accurate way of running
+correction for PM2.5 readings compared to LRAPA and AQandU corrections.
 
 That's it! That's all it does.
 

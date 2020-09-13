@@ -74,9 +74,20 @@ fun aqiFromPm25(pm25: Double): Int {
     return round(slope + intercept).toInt()
 }
 
+fun epaCorrect(pm25: Double, relativeHumidity: Double): Double {
+    // Source: https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=349513&Lab=CEMM&simplesearch=0&showcriteria=2&sortby=pubDate&timstype=&datebeginpublishedpresented=08/25/2018
+    return 0.52 * pm25 - 0.085 * relativeHumidity + 5.71
+}
+
+fun aqAndUCorrect(pm25: Double): Double {
+    // Source: https://www.mdpi.com/1424-8220/20/13/3683/htm
+    return pm25 * 0.778 + 2.65
+}
+
+// TODO(awdavies): Make this configurable?
 fun lrapaCorrect(pm25: Double): Double {
     // See: http://lrapa.org/DocumentCenter/View/4147/PurpleAir-Correction-Summary
-    return pm25*0.5 - 0.66
+    return pm25 * 0.5 - 0.66
 }
 
 fun aqiToDescription(aqi: Int): String {

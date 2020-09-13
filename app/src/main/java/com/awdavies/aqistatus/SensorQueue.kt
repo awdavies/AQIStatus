@@ -61,14 +61,19 @@ class Sensor private constructor(
     val aqi: Int,
     private val distanceFromOrigin: Double
 ) : Comparable<Sensor> {
-
     companion object {
         fun create(latitude: Double, longitude: Double, json: JSONArray): Sensor? {
             return try {
                 val pmZero = json.getDouble(2)
-                val thisLatitude = json.getDouble(6)
-                val thisLongitude = json.getDouble(7)
-                val pmCorrect = lrapaCorrect(pmZero)
+                val relativeHumidity = try {
+                    json.getDouble(4)
+                } catch (e: JSONException) {
+                    0.0
+                }
+                val thisLatitude = json.getDouble(7)
+                val thisLongitude = json.getDouble(8)
+                val pmCorrect = epaCorrect(pmZero, relativeHumidity)
+                Log.d(TAG, "PM2.5 EPA correction before: $pmZero, after: $pmCorrect, humidity: $relativeHumidity")
                 Sensor(aqiFromPm25(pmCorrect), distanceFromPoint(thisLatitude, thisLongitude, latitude, longitude))
             } catch (e: JSONException) {
                 null
@@ -112,7 +117,7 @@ class SensorQueue private constructor(private val sensors: PriorityQueue<Sensor>
                         Log.e(TAG, "Received null element from data array")
                         return null
                     }
-                    if (sensorJson.getInt(4) != 0) {
+                    if (sensorJson.getInt(5) != 0) {
                         Log.d(TAG, "Skipping ostensibly-indoor sensor.")
                         continue
                     }

@@ -31,7 +31,7 @@ class PurpleAirUrl(private val origin: Location) {
         val seLat = origin.latitude - radius
         val nwLon = origin.longitude + radius
         val seLon = origin.longitude - radius
-        return "https://www.purpleair.com/data.json?opt=1/i/mAQI/a0/cC0&fetch=true&nwlat=$nwLat&selat=$seLat&nwlong=$nwLon&selong=$seLon&fields=pm_0"
+        return "https://www.purpleair.com/data.json?fetch=true&nwlat=$nwLat&selat=$seLat&nwlong=$nwLon&selong=$seLon&fields=pm_0,humidity"
     }
 
     fun intentUrl(): String {

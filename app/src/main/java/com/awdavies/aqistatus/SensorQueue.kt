@@ -28,7 +28,6 @@ import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
 
-private const val API_VERSION = "7.0.19"
 private const val TAG = "SensorQueue"
 
 class VersionException(val want: String, val got: String) : Exception()
@@ -99,14 +98,7 @@ class SensorQueue private constructor(private val sensors: PriorityQueue<Sensor>
         fun create(latitude: Double, longitude: Double, body: JSONObject): SensorQueue? {
             Log.d(TAG, "Parsing JSON")
             return try {
-                val version = body.getString("version") ?: run {
-                    Log.e(TAG, "No version found in data: '$body'")
-                    return null
-                }
-                if (version != API_VERSION) {
-                    Log.e(TAG, "API Version out of date. Received '$version', expected '$API_VERSION'")
-                    throw VersionException(API_VERSION, version)
-                }
+                // TODO(awdavies): Throw some kind of info up there if there's too many parsing errors in a row.
                 val data = body.getJSONArray("data") ?: run {
                     Log.e(TAG, "No data found in response: '$body'")
                     return null
